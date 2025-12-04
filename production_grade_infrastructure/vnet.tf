@@ -29,14 +29,40 @@ resource "azurerm_network_security_group" "sub1-nsg" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
-  security_rule {
-    name                       = "test123"
+# http rule
+security_rule {
+    name                       = "allow-http"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+# https rule
+  security_rule {
+    name                       = "allow-https"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+  #ssh security rule
+  security_rule {
+    name                       = "allow-ssh"
+    priority                   = 102
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -50,7 +76,7 @@ resource "azurerm_subnet_network_security_group_association" "example" {
 
 # public IP for load balancer
 resource "azurerm_public_ip" "pip" {
-  name                = "loadbalancerpublicip"
+  name                = "myPublicIP"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   allocation_method   = "Static"
@@ -68,7 +94,7 @@ resource "azurerm_lb" "lb" {
   resource_group_name = azurerm_resource_group.rg.name
 
   frontend_ip_configuration {
-    name                 = "PublicIPAddress"
+    name                 = "myPublicIP"
     public_ip_address_id = azurerm_public_ip.pip.id
   }
 }
@@ -77,6 +103,40 @@ resource "azurerm_lb" "lb" {
 resource "azurerm_lb_backend_address_pool" "example" {
   loadbalancer_id = azurerm_lb.lb.id
   name            = "BackEndAddressPool"
+}
+
+# Load balancer Probe to check the health of backend pool
+resource "azurerm_lb_probe" "example" {
+  loadbalancer_id = azurerm_lb.example.id
+  name            = "http-probe"
+  protocol        = "Http"
+  request_path    = "/"
+  port            = 80
+}
+
+# Load Balancer rule
+resource "azurerm_lb_rule" "example" {
+  name                           = "http"
+  loadbalancer_id                = azurerm_lb.lb.id
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
+  frontend_ip_configuration_name = "myPublicIP"
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.example.id]
+  probe_id                       = azurerm_lb_probe.example.id
+}
+
+#add lb nat rules to allow ssh access to the backend instances
+resource "azurerm_lb_nat_rule" "ssh" {
+  name                           = "ssh"
+  resource_group_name            = azurerm_resource_group.rg.name
+  loadbalancer_id                = azurerm_lb.lb.id
+  protocol                       = "Tcp"
+  frontend_port_start            = 50000
+  frontend_port_end              = 50119
+  backend_port                   = 22
+  frontend_ip_configuration_name = "myPublicIP"
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.example.id
 }
 
 # Public IP for NAT Gateway
@@ -100,4 +160,10 @@ resource "azurerm_nat_gateway" "nat" {
 resource "azurerm_nat_gateway_public_ip_association" "example" {
   nat_gateway_id       = azurerm_nat_gateway.nat.id
   public_ip_address_id = azurerm_public_ip.natpip.id
+}
+
+# NAT Gateway association with subnet
+resource "azurerm_subnet_nat_gateway_association" "example" {
+  subnet_id      = azurerm_subnet.sub1.id
+  nat_gateway_id = azurerm_nat_gateway.nat.id
 }

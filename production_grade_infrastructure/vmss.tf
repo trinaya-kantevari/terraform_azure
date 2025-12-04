@@ -1,86 +1,59 @@
-resource "azurerm_lb_probe" "example" {
-  loadbalancer_id = azurerm_lb.example.id
-  name            = "http-probe"
-  protocol        = "Http"
-  request_path    = "/health"
-  port            = 8080
-}
 
-resource "azurerm_virtual_machine_scale_set" "example" {
-  name                = "mytestscaleset-1"
-  location            = azurerm_resource_group.example.location
-  resource_group_name = azurerm_resource_group.example.name
 
-  # automatic rolling upgrade
-  automatic_os_upgrade = true
-  upgrade_policy_mode  = "Rolling"
+resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
+  name                        = "prod-vmss"
+  resource_group_name         = azurerm_resource_group.rg.name
+  location                    = azurerm_resource_group.rg.location
+  sku_name                    = "Standard_D2s_v4"
+  instances                   = 3
+  platform_fault_domain_count = 1
+  zones                       = ["1"]
 
-  rolling_upgrade_policy {
-    max_batch_instance_percent              = 20
-    max_unhealthy_instance_percent          = 20
-    max_unhealthy_upgraded_instance_percent = 5
-    pause_time_between_batches              = "PT0S"
+  user_data_base64 = base64encode(file("user-data.sh"))
+  
+  os_profile {
+    linux_configuration {
+      disable_password_authentication = true
+      admin_username                  = "azureuser"
+      admin_ssh_key {
+        username   = "azureuser"
+        public_key = file("/c/Users/DELL/.ssh/key.pub")
+      }
+    }
   }
 
-  # required when using rolling upgrade policy
-  health_probe_id = azurerm_lb_probe.example.id
-
-  sku {
-    name     = "Standard_F2"
-    tier     = "Standard"
-    capacity = 2
-  }
-
-  storage_profile_image_reference {
+  source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
+    sku       = "22_04-LTS-gen2"
     version   = "latest"
   }
-
-  storage_profile_os_disk {
-    name              = ""
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
+  os_disk {
+    storage_account_type = "Premium_LRS"
+    caching              = "ReadWrite"
   }
 
-  storage_profile_data_disk {
-    lun           = 0
-    caching       = "ReadWrite"
-    create_option = "Empty"
-    disk_size_gb  = 10
-  }
-
-  os_profile {
-    computer_name_prefix = "testvm"
-    admin_username       = "myadmin"
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = true
-
-    ssh_keys {
-      path     = "/home/myadmin/.ssh/authorized_keys"
-      key_data = file("~/.ssh/demo_key.pub")
-    }
-  }
-
-  network_profile {
-    name    = "terraformnetworkprofile"
-    primary = true
+  network_interface {
+    name                          = "nic"
+    primary                       = true
+    enable_accelerated_networking = false
 
     ip_configuration {
-      name                                   = "TestIPConfiguration"
+      name                                   = "ipconfig"
       primary                                = true
-      subnet_id                              = azurerm_subnet.example.id
-      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.bpepool.id]
-      load_balancer_inbound_nat_rules_ids    = [azurerm_lb_nat_pool.lbnatpool.id]
+      subnet_id                              = azurerm_subnet.sub1.id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.example.id]
     }
   }
 
-  tags = {
-    environment = "staging"
+  boot_diagnostics {
+    storage_account_uri = ""
   }
-  
+
+  # Ignore changes to the instances property, so that the VMSS is not recreated when the number of instances is changed
+  lifecycle {
+    ignore_changes = [
+      instances
+    ]
+  }
 }
