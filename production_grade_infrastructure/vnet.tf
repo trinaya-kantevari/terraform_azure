@@ -1,7 +1,11 @@
+# random name for load balancer domain name
+resource "random_pet" "lb_hostname" {
+}
+
 # Resource Group
 resource "azurerm_resource_group" "rg" {
   name     = "prod_infrastructure"
-  location = "West Europe"
+  location = "Canada Central"
 }
 
 # Virtual Network
@@ -21,6 +25,7 @@ resource "azurerm_subnet" "sub1" {
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = ["10.0.0.0/24"]
+  depends_on = [ azurerm_virtual_network.vnet ]
 }
 
 # Network Security Group for the subnet
@@ -28,6 +33,7 @@ resource "azurerm_network_security_group" "sub1-nsg" {
   name                = "subnet1-nsg"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+  depends_on = [ azurerm_subnet.sub1 ]
 
 # http rule
 security_rule {
@@ -72,6 +78,7 @@ security_rule {
 resource "azurerm_subnet_network_security_group_association" "example" {
   subnet_id                 = azurerm_subnet.sub1.id
   network_security_group_id = azurerm_network_security_group.sub1-nsg.id
+  depends_on = [ azurerm_subnet.sub1, azurerm_network_security_group.sub1-nsg ]
 }
 
 # public IP for load balancer
@@ -80,7 +87,8 @@ resource "azurerm_public_ip" "pip" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   allocation_method   = "Static"
-  zones = ["1", "2"]
+  zones               = ["1", "2"]
+  domain_name_label   = "${random_pet.lb_hostname.id}"
 
   tags = {
     environment = "Production"
@@ -92,6 +100,7 @@ resource "azurerm_lb" "lb" {
   name                = "ProdLoadBalancer"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+  depends_on = [ azurerm_public_ip.pip ]
 
   frontend_ip_configuration {
     name                 = "myPublicIP"
@@ -103,15 +112,17 @@ resource "azurerm_lb" "lb" {
 resource "azurerm_lb_backend_address_pool" "example" {
   loadbalancer_id = azurerm_lb.lb.id
   name            = "BackEndAddressPool"
+  depends_on = [ azurerm_lb.lb ]
 }
 
 # Load balancer Probe to check the health of backend pool
 resource "azurerm_lb_probe" "example" {
-  loadbalancer_id = azurerm_lb.example.id
+  loadbalancer_id = azurerm_lb.lb.id
   name            = "http-probe"
   protocol        = "Http"
   request_path    = "/"
   port            = 80
+  depends_on = [ azurerm_lb.lb ]
 }
 
 # Load Balancer rule
@@ -124,9 +135,10 @@ resource "azurerm_lb_rule" "example" {
   frontend_ip_configuration_name = "myPublicIP"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.example.id]
   probe_id                       = azurerm_lb_probe.example.id
+  depends_on = [ azurerm_lb_backend_address_pool.example, azurerm_lb_probe.example ]
 }
 
-#add lb nat rules to allow ssh access to the backend instances
+# Load Balancer nat rules to allow ssh access to the backend instances
 resource "azurerm_lb_nat_rule" "ssh" {
   name                           = "ssh"
   resource_group_name            = azurerm_resource_group.rg.name
@@ -137,6 +149,7 @@ resource "azurerm_lb_nat_rule" "ssh" {
   backend_port                   = 22
   frontend_ip_configuration_name = "myPublicIP"
   backend_address_pool_id        = azurerm_lb_backend_address_pool.example.id
+  depends_on = [ azurerm_lb.lb, azurerm_lb_backend_address_pool.example ]
 }
 
 # Public IP for NAT Gateway
@@ -160,10 +173,12 @@ resource "azurerm_nat_gateway" "nat" {
 resource "azurerm_nat_gateway_public_ip_association" "example" {
   nat_gateway_id       = azurerm_nat_gateway.nat.id
   public_ip_address_id = azurerm_public_ip.natpip.id
+  depends_on = [ azurerm_public_ip.natpip, azurerm_nat_gateway.nat ]
 }
 
 # NAT Gateway association with subnet
 resource "azurerm_subnet_nat_gateway_association" "example" {
   subnet_id      = azurerm_subnet.sub1.id
   nat_gateway_id = azurerm_nat_gateway.nat.id
+  depends_on = [ azurerm_subnet.sub1, azurerm_nat_gateway.nat ]
 }

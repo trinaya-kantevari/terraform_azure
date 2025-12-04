@@ -1,13 +1,12 @@
-
-
 resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
   name                        = "prod-vmss"
   resource_group_name         = azurerm_resource_group.rg.name
   location                    = azurerm_resource_group.rg.location
-  sku_name                    = "Standard_D2s_v4"
-  instances                   = 3
+  sku_name                    = "Standard_D2s_v3"
+  instances                   = 1
   platform_fault_domain_count = 1
   zones                       = ["1"]
+  depends_on = [ azurerm_subnet.sub1, azurerm_lb_backend_address_pool.example ]
 
   user_data_base64 = base64encode(file("user-data.sh"))
   
@@ -17,7 +16,7 @@ resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
       admin_username                  = "azureuser"
       admin_ssh_key {
         username   = "azureuser"
-        public_key = file("/c/Users/DELL/.ssh/key.pub")
+        public_key = file("C:/Users/DELL/.ssh/key.pub")
       }
     }
   }
