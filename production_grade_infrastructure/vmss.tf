@@ -16,7 +16,7 @@ resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
       admin_username                  = "azureuser"
       admin_ssh_key {
         username   = "azureuser"
-        public_key = file("C:/Users/DELL/.ssh/key.pub")
+        public_key = file("<path to key.pub file>")
       }
     }
   }
