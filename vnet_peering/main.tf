@@ -6,12 +6,12 @@ resource "azurerm_resource_group" "rg" {
 
 # Virtual Network 1
 resource "azurerm_virtual_network" "vnet1" {
-  name                = "prod-network-1"
+  name                = "network-1"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   address_space       = ["10.0.0.0/16"]
   tags = {
-    environment = "Production"
+    environment = "staging"
   }
 }
 
@@ -26,12 +26,12 @@ resource "azurerm_subnet" "sub1" {
 
 # Virtual Network
 resource "azurerm_virtual_network" "vnet2" {
-  name                = "prod-network-2"
+  name                = "network-2"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   address_space       = ["10.1.0.0/16"]
   tags = {
-    environment = "Production"
+    environment = "staging"
   }
 }
 
