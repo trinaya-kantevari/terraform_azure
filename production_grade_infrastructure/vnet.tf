@@ -4,7 +4,7 @@ resource "random_pet" "lb_hostname" {
 
 # Resource Group
 resource "azurerm_resource_group" "rg" {
-  name     = "prod_infrastructure"
+  name     = "prod_infrastructure_rg"
   location = "Canada Central"
 }
 
@@ -181,4 +181,56 @@ resource "azurerm_subnet_nat_gateway_association" "example" {
   subnet_id      = azurerm_subnet.sub1.id
   nat_gateway_id = azurerm_nat_gateway.nat.id
   depends_on = [ azurerm_subnet.sub1, azurerm_nat_gateway.nat ]
+}
+
+# Bastion subnet for bastion host
+resource "azurerm_subnet" "bastion_sub" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.1.0.0/27"]
+  depends_on = [ azurerm_virtual_network.vnet ]
+}
+
+# Public IP for bastion host
+resource "azurerm_public_ip" "bastionpip" {
+  name                = "bastionpip"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
+
+# Bastion Host
+resource "azurerm_bastion_host" "bastion" {
+  name                = "prod_bastion"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                 = "configuration"
+    subnet_id            = azurerm_subnet.bastion_sub.id
+    public_ip_address_id = azurerm_public_ip.bastionpip.id
+  }
+}
+
+# Network Security Group for the bastion subnet
+resource "azurerm_network_security_group" "bastion-nsg" {
+  name                = "bastion-nsg"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  depends_on = [ azurerm_subnet.bastion_sub ]
+
+  #ssh security rule
+  security_rule {
+    name                       = "allow-ssh"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
