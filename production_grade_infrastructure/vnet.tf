@@ -206,6 +206,7 @@ resource "azurerm_bastion_host" "bastion" {
   name                = "prod_bastion"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+  depends_on = [ azurerm_subnet.bastion_sub, azurerm_public_ip.bastionpip]
 
   ip_configuration {
     name                 = "configuration"

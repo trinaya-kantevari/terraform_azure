@@ -1,3 +1,4 @@
+# Virtual Machine Scale Sets (VMSS) the VMs where the application runs on.
 resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
   name                        = "prod-vmss"
   resource_group_name         = azurerm_resource_group.rg.name
@@ -8,6 +9,7 @@ resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
   zones                       = ["1"]
   depends_on = [ azurerm_subnet.sub1, azurerm_lb_backend_address_pool.example ]
 
+# User data is the script executed at VM startup.
   user_data_base64 = base64encode(file("user-data.sh"))
   
   os_profile {
@@ -57,6 +59,7 @@ resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
   }
 }
 
+# Auto scale settings on when Azure should autoscale the virtual machine scale set instances.
 resource "azurerm_monitor_autoscale_setting" "example" {
   name                = "prodAutoscaleSetting"
   resource_group_name = azurerm_resource_group.rg.name
