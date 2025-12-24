@@ -28,7 +28,9 @@ resource "azurerm_subnet" "sub1" {
   depends_on = [ azurerm_virtual_network.vnet ]
 }
 
-# Network Security Group for the subnet
+# Network Security Group (NSG) for the subnet with security rules that allow access to the 
+# applications running on the instances via ports 80 (HTTP) and 443 (HTTPS), 
+# and permit SSH (port 22) access to the instances.
 resource "azurerm_network_security_group" "sub1-nsg" {
   name                = "subnet1-nsg"
   location            = azurerm_resource_group.rg.location

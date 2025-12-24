@@ -1,3 +1,5 @@
+# Run this script to create the backend on azure.
+
 # Variables for storage
 let "randomIdentifier=$RANDOM*$RANDOM"
 location="East US"
