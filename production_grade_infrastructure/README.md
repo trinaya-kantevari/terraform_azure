@@ -23,3 +23,5 @@ Run ```terraform init``` to initialize a Terraform working directory. This downl
 Run ```terraform plan``` to view exactly what actions (create, modify, or destroy) Terraform will take to match your infrastructure to your configuration, without actually applying those changes.
 
 Run ```terraform apply --auto-approve``` to execute the actions proposed in the terraform plan, creating, updating, or destroying infrastructure to match the desired state defined in your configuration files.
+
+Run ```terraform destroy``` to delete all the infrastructure currently managed by Terraform. (For this project, to Delete all the resources that we just created to avoid cloud costs.)

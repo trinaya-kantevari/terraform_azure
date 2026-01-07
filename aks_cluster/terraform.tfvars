@@ -1,0 +1,5 @@
+rgname = "aks-rg"
+location = "canadacentral"
+service_principal_name = "aks-sp"
+keyvault_name = "aks-kv"
+SUB_ID = ""
