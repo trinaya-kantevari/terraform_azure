@@ -14,9 +14,9 @@
 - Create main.tf which is the main file where we call our modules.
 - For our modules, create a folder called modules and under it create three separate folders(child modules) each for service principal, keyvault and aks.
 - Under each of these modules, we create:
-main.tf - configuration of all the required resources for the module.
-variables.tf - variables required as input for main.tf to create the resources.
-outputs.tf - the output variables which are the values after creating the resources. These must be mentioned in order to be used by other modules or the root main.tf
+1. main.tf - configuration of all the required resources for the module.
+2. variables.tf - variables required as input for main.tf to create the resources.
+3. outputs.tf - the output variables which are the values after creating the resources. These must be mentioned in order to be used by other modules or the root main.tf
 
 ## Project Structure
 
