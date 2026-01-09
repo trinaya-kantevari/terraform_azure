@@ -12,12 +12,12 @@ variable "location" {
 
 variable "service_principal_name" {
   type = string
-  default = "aks-sp"
+  default = "trinaya-aks-sp"
 }
 
 variable "keyvault_name" {
   type = string
-  default = "aks-kv"
+  default = "trinaya-aks-kv"
 }
 
 variable "SUB_ID" {

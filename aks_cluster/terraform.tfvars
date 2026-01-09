@@ -1,5 +1,5 @@
-rgname = "aks-rg"
+rgname = "trinaya-aks-rg"
 location = "canadacentral"
-service_principal_name = "aks-sp"
-keyvault_name = "aks-kv"
+service_principal_name = "trinaya-aks-sp"
+keyvault_name = "trinaya-aks-kv"
 SUB_ID = ""

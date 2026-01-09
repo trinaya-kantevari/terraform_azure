@@ -4,8 +4,8 @@
 ![aks_architecture](https://github.com/trinaya-kantevari/terraform_azure/blob/main/aks_cluster/aks.jpg)
 
 ## Overview
-- We first create a service principal to manage AKS cluster instead of using user credentials. The service principal fetches client secret stored inside the key vault.
-- We must create a keyvault to store the client credentials accessed by the service principal. After creating the keyvault, we create a secret where the client password actually lies.
+- We first create a service principal to provision and manage AKS cluster instead of using user credentials. The service principal stores it's client secret inside the key vault.
+- We must create a keyvault to store the client credentials. After creating the keyvault, we create a secret where the client password actually lies.
 - Now we create the AKS Cluster with our requirements and also specify the service principal with it's client id and client secret.
 - We use modules to provision these. Modules help in reusability i.e, we can simply make changes to the variables values and run the same code to create another set of resources.
 

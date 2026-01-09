@@ -21,20 +21,24 @@ module "keyvault" {
   resource_group_name = var.rgname
   location = var.location
   keyvault_name = var.keyvault_name
+  service_principal_name      = var.service_principal_name
+  service_principal_object_id = module.serviceprincipal.service_principal_object_id
+  service_principal_tenant_id = module.serviceprincipal.service_principal_tenant_id
+  depends_on = [ module.serviceprincipal ]
 }
 
 resource "azurerm_key_vault_secret" "example" {
-  name         = module.ServicePrincipal.client_id
-  value        = module.ServicePrincipal.client_secret
+  name         = module.serviceprincipal.client_id
+  value        = module.serviceprincipal.client_secret
   key_vault_id = module.keyvault.keyvault_id
-  depends_on = [ module.keyvault, module.serviceprincipal]
+  depends_on = [ module.keyvault, module.serviceprincipal, azurerm_role_assignment.rolesp]
 }
 
 module "aks" {
   source                 = "./modules/aks/"
   service_principal_name = var.service_principal_name
-  client_id              = module.ServicePrincipal.client_id
-  client_secret          = module.ServicePrincipal.client_secret
+  client_id              = module.serviceprincipal.client_id
+  client_secret          = module.serviceprincipal.client_secret
   location               = var.location
   resource_group_name    = var.rgname
   depends_on = [ module.serviceprincipal ]
