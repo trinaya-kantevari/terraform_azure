@@ -54,7 +54,5 @@ aks_cluster/
 - Use custom modules to improve code reusability and maintainability.
 - Manage sensitive data securely using Azure Key Vault.
 - Use explicit dependencies to prevent resource creation errors. For example, to ensure resources like Service Principals are created before role assignments or other dependent resources.
-- Fetch latest Kubernetes version and override if a specific version is explicitly set as variable.
-- Validate Kubernetes version input to avoid provisioning errors.
-- Generate SSH keys dynamically using Terraform’s TLS private key resource rather than relying on local keys.
+- Fetch latest Kubernetes version.
 - Create local kubeconfig file using Terraform for seamless cluster access.
