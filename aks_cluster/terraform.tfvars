@@ -1,0 +1,5 @@
+rgname = "trinaya-aks-rg"
+location = "canadacentral"
+service_principal_name = "trinaya-aks-sp"
+keyvault_name = "trinaya-aks-kv"
+SUB_ID = ""

@@ -1,0 +1,79 @@
+# Virtual Machine Scale Sets (VMSS) the VMs where the application runs on.
+resource "azurerm_orchestrated_virtual_machine_scale_set" "vmss" {
+  name                        = "prod-vmss"
+  resource_group_name         = azurerm_resource_group.rg.name
+  location                    = azurerm_resource_group.rg.location
+  sku_name                    = "Standard_D2s_v3"
+  instances                   = 1
+  platform_fault_domain_count = 1
+  zones                       = ["1"]
+  depends_on = [ azurerm_subnet.sub1, azurerm_lb_backend_address_pool.example ]
+
+# User data is the script executed at VM startup.
+  user_data_base64 = base64encode(file("user-data.sh"))
+  
+  os_profile {
+    linux_configuration {
+      disable_password_authentication = true
+      admin_username                  = "azureuser"
+      admin_ssh_key {
+        username   = "azureuser"
+        public_key = file("<path_to_key.pub_file>")
+      }
+    }
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-LTS-gen2"
+    version   = "latest"
+  }
+  os_disk {
+    storage_account_type = "Premium_LRS"
+    caching              = "ReadWrite"
+  }
+
+  network_interface {
+    name                          = "nic"
+    primary                       = true
+    enable_accelerated_networking = false
+
+    ip_configuration {
+      name                                   = "ipconfig"
+      primary                                = true
+      subnet_id                              = azurerm_subnet.sub1.id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.example.id]
+    }
+  }
+
+  boot_diagnostics {
+    storage_account_uri = ""
+  }
+
+  # Ignore changes to the instances property, so that the VMSS is not recreated when the number of instances is changed
+  lifecycle {
+    ignore_changes = [
+      instances
+    ]
+  }
+}
+
+# Auto scale settings on when Azure should autoscale the virtual machine scale set instances.
+resource "azurerm_monitor_autoscale_setting" "example" {
+  name                = "prodAutoscaleSetting"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  target_resource_id  = azurerm_orchestrated_virtual_machine_scale_set.vmss.id
+  enabled = true
+
+  profile {
+    name = "prodAutoscaleProfile"
+
+    capacity {
+      default = 3
+      minimum = 1
+      maximum = 10
+    }
+  }
+}
