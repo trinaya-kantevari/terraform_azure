@@ -12,21 +12,21 @@
 
 2. Public Subnets: 3-tier architecture uses separate subnets for public (front-end), private (backend), and database tiers, enabling different networking rules and secure access control through Network Security Groups that control traffic based on defined rules to each layer.
 
-3. Private Subnet:
+3. Private Subnet
 
 3. Database Subnet: Managed PostgreSQL database and read replica deliver high availability through asynchronous database sync between primary and replica in a master-slave architecture, ensuring failover capabilities for production workloads.
 
 3. App Gateway Subnet: and Web Application Firewall (WAF) in the App Gateway public subnet protect against DDoS and presentation layer attacks.
 
-4. Bastion Subnet:
+4. Bastion Subnet
 
 6. VMSS: Virtual Machine Scale Sets (VMSS) provide high availability and fault tolerance by automatically provisioning identical VMs from templates if one fails using health probes to check / and /health paths.
 
-7. Load Balancer:
+7. Load Balancer
 
 4. NAT Gateway: Azure NAT Gateway allows private subnet instances to pull Docker images and update packages without exposing them to intrusion and traffic interception risks.
 
-5. DNS: 
+5. DNS
 
 4. Keyvault: Azure Key Vault stores database credentials (host, username, password, name, port, SSL mode) as secrets.
 
@@ -43,8 +43,6 @@ Azure deployment requires Service Principal authentication setup for Terraform t
 - Terraform count and count.index create two public subnets for front-end and two private subnets for back-end and database, with Bastion, application gateway, and NSG rules controlling access to front-end (HTTP/HTTPS) and private subnets (VNet only).
 
 - Separate Terraform variable files for each environment (prod, test, dev) enable different configurations, with separate backend.tf for prod preventing accidental changes and Docker credentials stored in Key Vault for security.
-
-## Best Practices
 
 
 ## Execution
